@@ -1,0 +1,6 @@
+README.md
+setup.py
+lvae.egg-info/PKG-INFO
+lvae.egg-info/SOURCES.txt
+lvae.egg-info/dependency_links.txt
+lvae.egg-info/top_level.txt

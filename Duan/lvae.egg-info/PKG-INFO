@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: lvae
+Version: 0.1
+Summary: Lossy image/video compression using variational autoencoders
+Home-page: https://github.com/duanzhiihao/lossy-vae
+Author: Zhihao Duan
+Author-email: duan90@purdue.edu
