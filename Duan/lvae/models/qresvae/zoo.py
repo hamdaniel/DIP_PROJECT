@@ -50,7 +50,8 @@ def qres34m(lmb=32, pretrained=False):
     model = qres.HierarchicalVAE(cfg)
     if (pretrained is True) and (lmb in {16, 32, 64, 128, 256, 512, 1024, 2048}):
         url = f'https://huggingface.co/duanzh0/my-model-weights/resolve/main/qres34m/qres34m-lmb{lmb}.pt'
-        msd = load_state_dict_from_url(url)['model']
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        msd = load_state_dict_from_url(url, map_location=device)['model']
         model.load_state_dict(msd)
     elif isinstance(pretrained, str):
         msd = torch.load(pretrained)['model']
