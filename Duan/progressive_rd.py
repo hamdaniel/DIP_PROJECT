@@ -7,7 +7,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import torchvision.utils as tv
 from lvae import get_model
-
+import pandas as pd
 
 def run_progressive_coding(model, img_path, device='cuda'):
     with torch.no_grad():
@@ -111,17 +111,29 @@ def main():
             all_psnrs.append(psnrs)
             all_recons.append(ims)
 
+        # Read external RD data CSV once
+        csv_path = "../Islam/my_recons/all_images_rd_values.csv"  # <-- Set the path to your CSV file
+        rd_df = pd.read_csv(csv_path)
+
         # --- Plot RD curves ---
         plt.figure(figsize=(10, 6))
         for i, lmb in enumerate(lambdas):
             plt.plot(all_bpps[i], all_psnrs[i], marker='o', label=f'λ={lmb}')
+
+        # Add external data from CSV
+        img_name = os.path.basename(img_path).split('.')[0]  # e.g., 'kodim04'
+        df_img = rd_df[rd_df['image_name'] == img_name]
+
+        if not df_img.empty:
+            plt.plot(df_img['bpp'], df_img['psnr'], 's--', color='orange', label='Islam')
+
         plt.xlabel('Bits per pixel (bpp)')
         plt.ylabel('PSNR (dB)')
-        plt.title(f'Rate-Distortion Curves for {os.path.basename(img_path)}')
+        plt.title(f'Rate-Distortion Curves for {img_name}')
         plt.legend()
         plt.grid(True, linestyle='--', alpha=0.5)
         plt.tight_layout()
-        plt.savefig(os.path.join(rd_save_dir, f"rd_curve_{os.path.basename(img_path).split('.')[0]}.png"))
+        plt.savefig(os.path.join(rd_save_dir, f"rd_curve_{img_name}.png"))
         plt.close()
 
         # --- Save image grid with labels ---

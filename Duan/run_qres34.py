@@ -69,8 +69,9 @@ def save_comparison_plot(original_tensor, recon_tensors, bpps, out_path, lambdas
 
 
 def main():
+    allowed_lambdas = [16, 32, 64, 128, 256, 512, 1024, 2048]
     parser = argparse.ArgumentParser(description='Run QRes34 model progressive coding and visualize results.')
-    parser.add_argument('--lmbs', type=int, nargs='+', required=True, help='List of lambda values')
+    parser.add_argument('--lmbs', type=int, nargs='+', default=allowed_lambdas, help='List of lambda values')
     parser.add_argument('--images', nargs='*', default=None, help='Paths to input images (optional)')
     parser.add_argument('--outdir', type=str, default='./outputs', help='Directory to save outputs')
     args = parser.parse_args()
