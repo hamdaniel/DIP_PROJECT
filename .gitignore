@@ -2,3 +2,12 @@ datasets/
 Islam/test/
 
 Islam/results/
+Hamzany/rd_plots/rd_plot_*
+Islam/BSD500/codes/*
+Islam/BSD500/codes_cpu/*
+Islam/BSD500/codes_cpu_exp/*
+Islam/BSD500/decoded/*
+Islam/BSD500/decoded_cpu/*
+Islam/BSD500/decoded_cpu_exp/*
+Islam/BSD500/reconstructions/*
+Islam/BSD500/val_padded/*

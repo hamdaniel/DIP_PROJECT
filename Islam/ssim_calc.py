@@ -6,6 +6,9 @@ matplotlib.use('Agg')  # So it works on servers without display
 import matplotlib.pyplot as plt
 from PIL import Image
 import csv
+from skimage.measure import compare_ssim as ssim
+
+
 
 def compute_bpp(npz_path, height, width):
     file_size_bits = os.path.getsize(npz_path) * 8  # bytes to bits
@@ -16,20 +19,20 @@ def load_image(path):
 
 def compute_ssim(img1, img2):
     """
-    Computes SSIM between two PyTorch tensors with shape (C, H, W) or (H, W).
-    Assumes values are in [0, 1].
-    Converts tensors to numpy arrays before computing SSIM.
+    Computes SSIM between two images using skimage.measure.compare_ssim.
+    Assumes values are in [0, 255] or [0, 1]. Supports color images.
     """
-    # Convert to (H, W) grayscale if necessary
-    if img1.ndim == 3 and img1.shape[0] == 3:
-        img1 = 0.2989 * img1[0] + 0.5870 * img1[1] + 0.1140 * img1[2]
-        img2 = 0.2989 * img2[0] + 0.5870 * img2[1] + 0.1140 * img2[2]
+    if img1.max() > 1.0:
+        img1 = img1 / 255.0
+        img2 = img2 / 255.0
 
-    # Convert to NumPy
-    img1_np = img1.detach().cpu().numpy()
-    img2_np = img2.detach().cpu().numpy()
+    if img1.ndim == 3 and img1.shape[2] == 3:
+        # Color image — pass multichannel=True
+        return ssim(img1, img2, multichannel=True, data_range=1.0)
+    else:
+        # Grayscale
+        return ssim(img1, img2, data_range=1.0)
 
-    return ssim(img1_np, img2_np, data_range=1.0)
 
 def plot_reconstructions(original_path, recon_folder, npz_path, save_path):
     try:
@@ -87,10 +90,10 @@ def plot_reconstructions(original_path, recon_folder, npz_path, save_path):
     return bpp_vals, ssim_vals
 
 def main():
-    input_folder = 'test/images'
-    recon_root = 'test/decoded'
-    code_root = 'test/codes'
-    output_folder = 'my_recons'
+    input_folder = 'BSD500/val_padded'
+    recon_root = 'BSD500/decoded'
+    code_root = 'BSD500/codes'
+    output_folder = 'BSD500/reconstructions'
 
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -103,11 +106,12 @@ def main():
 
     for fname in os.listdir(input_folder):
         if fname.endswith('.png'):
-            img_name = os.path.splitext(fname)[0]
+            img_name_full = os.path.splitext(fname)[0]  # e.g., "123_padded"
+            img_num = img_name_full.replace('_padded', '')  # e.g., "123"
             original_path = os.path.join(input_folder, fname)
-            recon_folder = os.path.join(recon_root, img_name)
-            npz_path = os.path.join(code_root, img_name + '.npz')
-            save_path = os.path.join(output_folder, img_name + '_recons.png')
+            recon_folder = os.path.join(recon_root, img_num)
+            npz_path = os.path.join(code_root, img_num + '.npz')
+            save_path = os.path.join(output_folder, img_num + '_recons.png')
 
             result = plot_reconstructions(original_path, recon_folder, npz_path, save_path)
             if result is None:
@@ -117,7 +121,7 @@ def main():
 
             # Save all image data for CSV
             for i, (bpp, ssim) in enumerate(zip(bpp_vals, ssim_vals), start=1):
-                all_rd_rows.append((img_name, i, bpp, ssim))
+                all_rd_rows.append((img_num, i, bpp, ssim))
 
             if not all_bpp:
                 all_bpp = bpp_vals  # assume same for all images

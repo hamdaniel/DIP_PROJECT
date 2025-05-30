@@ -487,7 +487,7 @@ class HierarchicalVAE(nn.Module):
         Args:
             im (torch.Tensor): a batch of images, (N, C, H, W), values between (0, 1)
         """
-        assert (im.shape[2] % self.max_stride == 0) and (im.shape[3] % self.max_stride == 0)
+        assert (im.shape[2] % self.max_stride == 0) and (im.shape[3] % self.max_stride == 0), str(self.max_stride)
         if not self._flops_mode:
             assert (im.dim() == 4) and (0 <= im.min() <= im.max() <= 1) and not im.requires_grad
         x = (im + self.im_shift) * self.im_scale

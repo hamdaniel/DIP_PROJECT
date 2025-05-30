@@ -141,9 +141,9 @@ def main():
         image_extensions = ('*.png', '*.jpg', '*.jpeg', '*.bmp')
         images = []
         for ext in image_extensions:
-            images.extend(glob(os.path.join('../datasets/kodak', ext)))
+            images.extend(glob(os.path.join('../datasets/BSD500/val_resized_div64', ext)))
         if not images:
-            print("No images found in ./../datasets/kodak folder.")
+            print("No images found in ./../datasets/BSD500/val_resized_div64 folder.")
             return
     else:
         images = args.images
