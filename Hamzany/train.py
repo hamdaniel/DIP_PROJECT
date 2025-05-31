@@ -22,6 +22,22 @@ def set_seed(seed):
         torch.cuda.manual_seed(seed)
 
 
+def read_logged_hyperparams(log_path):
+    logged_combos = set()
+    try:
+        with open(log_path, newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            next(reader)  # skip header
+            for row in reader:
+                # Assuming CSV columns: lr, batch_size, hidden_size, iter_fc, epoch, train_loss, val_loss, phase
+                if len(row) >= 4:
+                    lr, batch_size, hidden_size, iter_fc = row[0], row[1], row[2], row[3]
+                    logged_combos.add( (float(lr), int(batch_size), int(hidden_size), int(iter_fc)) )
+    except FileNotFoundError:
+        # No file yet, no logged combos
+        pass
+    return logged_combos
+
 def calculate_transforms(train_dataset):
     # Calculate mean and std from train_dataset images (ToTensor needed first)
     loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=False, num_workers=0)
@@ -149,12 +165,19 @@ def main(csv_path, image_dir):
     patience = 5  # early stopping patience
 
     log_path = 'hyperparam_tuning_log.csv'
-    write_log_header(log_path)
+    logged_combos = read_logged_hyperparams(log_path)
+    if not logged_combos:
+        # File doesn't exist or empty - write header
+        write_log_header(log_path)
 
     best_val_loss = float('inf')
     best_params = None
 
     for lr, batch_size, hidden_size, iter_fc_size in itertools.product(learning_rates, batch_sizes, hidden_sizes, iter_fc_sizes):
+        if (lr, batch_size, hidden_size, iter_fc_size) in logged_combos:
+            print("Skipping lr={}, batch_size={}, hidden_size={}, iter_fc_size={} (already logged)".format(lr, batch_size, hidden_size, iter_fc_size))
+            continue
+
         print("Trying lr={}, batch_size={}, hidden_size={}, iter_fc_size={}".format(lr, batch_size, hidden_size, iter_fc_size))
 
         model = CompressionTimePredictor(hidden_size=hidden_size, iter_size=iter_fc_size).to(device)
