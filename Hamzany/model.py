@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class CompressionTimePredictor(nn.Module):
-    def __init__(self):
+    def __init__(self, hidden_size=64, iter_size=16):
         super(CompressionTimePredictor, self).__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(3, 16, kernel_size=5, stride=2, padding=2),
@@ -15,9 +15,9 @@ class CompressionTimePredictor(nn.Module):
             nn.AdaptiveAvgPool2d((4, 4))
         )
 
-        self.fc_img = nn.Linear(32 * 4 * 4, 64)
-        self.fc_iter = nn.Linear(1, 16)
-        self.fc_final = nn.Linear(64 + 16, 1)
+        self.fc_img = nn.Linear(32 * 4 * 4, hidden_size)
+        self.fc_iter = nn.Linear(1, iter_size)
+        self.fc_final = nn.Linear(hidden_size + iter_size, 1)
 
     def forward(self, image, iter_num):
         x = self.conv(image)

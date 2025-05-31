@@ -157,10 +157,21 @@ def main():
             writer = csv.writer(f)
             writer.writerow(decode_header)
 
+    processed_images = set()
+    if os.path.exists(encode_timings_file):
+        with open(encode_timings_file, 'r', newline='') as f_enc:
+            reader = csv.reader(f_enc)
+            for row in reader:
+                if len(row) == ITERATIONS + 1:  # one name + one time per iteration
+                    processed_images.add(row[0])
+
     for idx, img_path in enumerate(padded_images, 1):
         image_name = os.path.splitext(os.path.basename(img_path))[0]
         print("\n[{}/{}] Processing {}".format(idx, total, image_name))
-
+        
+        if image_name in processed_images:
+            print("\n[{}/{}] Skipping already processed image: {}".format(idx, len(padded_images), image_name))
+            continue
         img_tensor = load_image(img_path)
 
         encode_times_all = []

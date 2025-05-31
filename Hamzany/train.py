@@ -131,9 +131,10 @@ def main(csv_path, image_dir):
     test_dataset = CompressionTimeDatasetFromDF(test_df, image_dir, transform=transform_val_test)
 
     # Hyperparameter search space
-    learning_rates = [0.001, 0.0005]
+    learning_rates = [0.01, 0.001, 0.0005, 0.0001]
     batch_sizes = [16, 32]
     hidden_sizes = [64, 128]
+    iter_fc_sizes = [16, 32]
     max_epochs = 50
     patience = 5  # early stopping patience
 
@@ -143,10 +144,10 @@ def main(csv_path, image_dir):
     best_val_loss = float('inf')
     best_params = None
 
-    for lr, batch_size, hidden_size in itertools.product(learning_rates, batch_sizes, hidden_sizes):
-        print("Trying lr={}, batch_size={}, hidden_size={}".format(lr, batch_size, hidden_size))
+    for lr, batch_size, hidden_size, iter_fc_size in itertools.product(learning_rates, batch_sizes, hidden_sizes, iter_fc_sizes):
+        print("Trying lr={}, batch_size={}, hidden_size={}, iter_fc_size={}".format(lr, batch_size, hidden_size, iter_fc_size))
 
-        model = CompressionTimePredictor(hidden_size=hidden_size).to(device)
+        model = CompressionTimePredictor(hidden_size=hidden_size, iter_size=iter_fc_size).to(device)
         optimizer = optim.Adam(model.parameters(), lr=lr)
         criterion = nn.MSELoss()
 
@@ -215,6 +216,11 @@ def main(csv_path, image_dir):
     print("Final Test Loss: {:.6f}".format(test_loss))
 
     append_log(log_path, [best_params[0], best_params[1], best_params[2], '', '', test_loss, 'final_test'])
+
+    # Save the final model weights
+    model_save_path = "best_model.pth"
+    torch.save(final_model.state_dict(), model_save_path)
+    print("Final model weights saved to", model_save_path)
 
 if __name__ == '__main__':
     csv_path = '../datasets/BSD500_timings/total_timings_cpu.csv'           # <- change to your CSV file path
