@@ -5,13 +5,13 @@ import itertools
 import numpy as np
 import csv
 from torch.utils.data import DataLoader, Subset
-from .model import CompressionTimePredictor
-from .dataset import CompressionTimeDatasetFromDF
+from model import CompressionTimePredictor
+from dataset import CompressionTimeDatasetFromDF
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.model_selection import train_test_split
 from torchvision import transforms
 from PIL import Image
+import pandas as pd
 
 def set_seed(seed):
     random.seed(seed)
@@ -131,11 +131,15 @@ def main(csv_path, image_dir):
     test_dataset = CompressionTimeDatasetFromDF(test_df, image_dir, transform=transform_val_test)
 
     # Hyperparameter search space
-    learning_rates = [0.01, 0.001, 0.0005, 0.0001]
-    batch_sizes = [16, 32]
-    hidden_sizes = [64, 128]
-    iter_fc_sizes = [16, 32]
-    max_epochs = 50
+    # learning_rates = [0.01, 0.001, 0.0005, 0.0001]
+    # batch_sizes = [16, 32]
+    # hidden_sizes = [64, 128]
+    # iter_fc_sizes = [16, 32]
+    learning_rates = [0.0001]
+    batch_sizes = [16]
+    hidden_sizes = [64]
+    iter_fc_sizes = [16]
+    max_epochs = 2
     patience = 5  # early stopping patience
 
     log_path = 'hyperparam_tuning_log.csv'

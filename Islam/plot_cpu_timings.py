@@ -4,7 +4,7 @@ import numpy as np
 
 def main():
     # Load CSV
-    csv_path = 'timings_cpu.csv'  # <- Change to your actual CSV file path
+    csv_path = '../datasets/BSD500_timings/timings_cpu.csv'  # <- Change to your actual CSV file path
     df = pd.read_csv(csv_path)
 
     # Extract iteration columns
@@ -51,7 +51,7 @@ def main():
     plt.ylabel('Time [s]')
     plt.title('Scatter Plot of Iteration Times')
     plt.grid(True)
-    plt.savefig('scatter_plot.png', dpi=300, bbox_inches='tight')
+    plt.savefig('scatter_plot_all.png', dpi=300, bbox_inches='tight')
     plt.close()
 
     # --- Plot 2: Line plot (min, max, mean, range) ---
@@ -70,7 +70,7 @@ def main():
     plt.title('Min, Max, Average, and Range of Iteration Times')
     plt.legend()
     plt.grid(True)
-    plt.savefig('min_max_avg_range_plot.png', dpi=300, bbox_inches='tight')
+    plt.savefig('min_max_avg_range_plot_all.png', dpi=300, bbox_inches='tight')
     plt.close()
 
     # --- Plot 3: Variance plot ---
@@ -82,7 +82,7 @@ def main():
     plt.ylabel('Variance [s²]')
     plt.title('Variance in Iteration Times')
     plt.grid(True)
-    plt.savefig('variance_plot.png', dpi=300, bbox_inches='tight')
+    plt.savefig('variance_plot_all.png', dpi=300, bbox_inches='tight')
     plt.close()
 
 if __name__ == '__main__':
