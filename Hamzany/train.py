@@ -113,7 +113,7 @@ def write_log_header(log_path):
     with open(log_path, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow([
-            'lr', 'batch_size', 'hidden_size', 'epoch', 
+            'lr', 'batch_size', 'hidden_size', 'iter_fc', 'epoch',
             'train_loss', 'val_loss', 'phase'
         ])
 
@@ -199,7 +199,7 @@ def main(csv_path, image_dir):
 
             print("Epoch {} - Train Loss: {:.6f}, Val Loss: {:.6f}".format(epoch, train_loss, val_loss))
 
-            append_log(log_path, [lr, batch_size, hidden_size, epoch, train_loss, val_loss, 'tune'])
+            append_log(log_path, [lr, batch_size, hidden_size, iter_fc_size, epoch, train_loss, val_loss, 'tune'])
 
             if val_loss < best_combo_val_loss:
                 best_combo_val_loss = val_loss
@@ -215,7 +215,24 @@ def main(csv_path, image_dir):
             best_val_loss = best_combo_val_loss
             best_params = (lr, batch_size, hidden_size)
 
-    print("Best hyperparameters: lr={}, batch_size={}, hidden_size={}".format(*best_params))
+    # Read log and select best based on minimal val_loss
+    log_df = pd.read_csv(log_path)
+    tune_logs = log_df[log_df['phase'] == 'tune']
+    tune_logs = tune_logs.dropna(subset=['val_loss'])
+
+    if not tune_logs.empty:
+        tune_logs['val_loss'] = tune_logs['val_loss'].astype(float)
+        min_row = tune_logs.loc[tune_logs['val_loss'].idxmin()]
+        best_params = (
+            float(min_row['lr']),
+            int(min_row['batch_size']),
+            int(min_row['hidden_size']),
+            int(min_row['iter_fc'])
+        )
+        print("Best hyperparameters from log: lr={}, batch_size={}, hidden_size={}, iter_fc={}".format(*best_params))
+    else:
+        print("No tuning results found in log. Exiting.")
+        return
 
     # Retrain on train + val sets combined from scratch (no loading weights)
     full_train_df = pd.concat([train_df, val_df], ignore_index=True)
@@ -236,7 +253,7 @@ def main(csv_path, image_dir):
         train_loss = train(final_model, full_train_loader, criterion, optimizer, device)
         print("Retrain Epoch {} - Train Loss: {:.6f}".format(epoch, train_loss))
 
-        append_log(log_path, [best_params[0], best_params[1], best_params[2], epoch, train_loss, '', 'final_train'])
+        append_log(log_path, [best_params[0], best_params[1], best_params[2], best_params[3], epoch, train_loss, '', 'final_train'])
 
         if train_loss < best_final_train_loss:
             best_final_train_loss = train_loss
@@ -251,7 +268,8 @@ def main(csv_path, image_dir):
     test_loss = evaluate(final_model, test_loader, criterion, device)
     print("Final Test Loss: {:.6f}".format(test_loss))
 
-    append_log(log_path, [best_params[0], best_params[1], best_params[2], '', '', test_loss, 'final_test'])
+    append_log(log_path, [best_params[0], best_params[1], best_params[2], best_params[3], '', '', test_loss, 'final_test'])
+
 
     # Save the final model weights
     model_save_path = "best_model.pth"
