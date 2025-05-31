@@ -12,6 +12,7 @@ import torch.optim as optim
 from torchvision import transforms
 from PIL import Image
 import pandas as pd
+from tqdm import tqdm
 
 def set_seed(seed):
     random.seed(seed)
@@ -58,7 +59,8 @@ def calculate_transforms(train_dataset):
 def train(model, dataloader, criterion, optimizer, device):
     model.train()
     total_loss = 0.0
-    for (images, iters), targets in dataloader:
+
+    for (images, iters), targets in tqdm(dataloader, desc="Training", ncols=80):
         images = images.to(device)
         iters = iters.to(device)
         targets = targets.to(device)
@@ -77,14 +79,16 @@ def train(model, dataloader, criterion, optimizer, device):
 def evaluate(model, dataloader, criterion, device):
     model.eval()
     total_loss = 0.0
+
     with torch.no_grad():
-        for (images, iters), targets in dataloader:
+        for (images, iters), targets in tqdm(dataloader, desc="Evaluating", ncols=80):
             images = images.to(device)
             iters = iters.to(device)
             targets = targets.to(device)
 
             outputs = model(images, iters)
             loss = criterion(outputs, targets)
+
             total_loss += loss.item() * images.size(0)
 
     return total_loss / len(dataloader.dataset)
@@ -121,6 +125,11 @@ def main(csv_path, image_dir):
     val_df = full_df.iloc[val_indices].reset_index(drop=True)
     test_df = full_df.iloc[test_indices].reset_index(drop=True)
 
+    print("Dataset sizes:")
+    print(" - Train: {}".format(len(train_df)))
+    print(" - Validation: {}".format(len(val_df)))
+    print(" - Test: {}".format(len(test_df)))
+    
     # Create temporary dataset to compute normalization (only ToTensor transform)
     temp_train_dataset = CompressionTimeDatasetFromDF(train_df, image_dir, transform=transforms.ToTensor())
 
@@ -131,15 +140,12 @@ def main(csv_path, image_dir):
     test_dataset = CompressionTimeDatasetFromDF(test_df, image_dir, transform=transform_val_test)
 
     # Hyperparameter search space
-    # learning_rates = [0.01, 0.001, 0.0005, 0.0001]
-    # batch_sizes = [16, 32]
-    # hidden_sizes = [64, 128]
-    # iter_fc_sizes = [16, 32]
-    learning_rates = [0.0001]
-    batch_sizes = [16]
-    hidden_sizes = [64]
-    iter_fc_sizes = [16]
-    max_epochs = 2
+    learning_rates = [0.01, 0.001, 0.0005, 0.0001]
+    batch_sizes = [16, 32]
+    hidden_sizes = [64, 128]
+    iter_fc_sizes = [16, 32]
+
+    max_epochs = 50
     patience = 5  # early stopping patience
 
     log_path = 'hyperparam_tuning_log.csv'
@@ -157,6 +163,9 @@ def main(csv_path, image_dir):
 
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=batch_size)
+
+        print(" - Train batches: {}".format(len(train_loader)))
+        print(" - Validation batches: {}".format(len(val_loader)))
 
         best_combo_val_loss = float('inf')
         epochs_no_improve = 0
